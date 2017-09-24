@@ -62,6 +62,7 @@
        test(attr(deny(warnings))))]
 #![deny(missing_docs)]
 #![cfg_attr(test, deny(warnings))]
+#![feature(conservative_impl_trait)]
 
 use std::io::prelude::*;
 
@@ -84,17 +85,16 @@ pub type StderrTerminal = Terminal<Output = Stderr> + Send;
 #[cfg(not(windows))]
 /// Return a Terminal wrapping stdout, or None if a terminal couldn't be
 /// opened.
-pub fn stdout() -> Option<Box<StdoutTerminal>> {
-    TerminfoTerminal::new(io::stdout()).map(|t| Box::new(t) as Box<StdoutTerminal>)
+pub fn stdout() -> Option<impl Terminal<Output = Stdout> + Send> {
+    TerminfoTerminal::new(io::stdout())
 }
 
 #[cfg(windows)]
 /// Return a Terminal wrapping stdout, or None if a terminal couldn't be
 /// opened.
-pub fn stdout() -> Option<Box<StdoutTerminal>> {
+pub fn stdout() -> Option<impl Terminal<Output = Stdout> + Send> {
     TerminfoTerminal::new(io::stdout())
-        .map(|t| Box::new(t) as Box<StdoutTerminal>)
-        .or_else(|| WinConsole::new(io::stdout()).ok().map(|t| Box::new(t) as Box<StdoutTerminal>))
+        .or_else(|| WinConsole::new(io::stdout()).ok())
 }
 
 #[cfg(not(windows))]
